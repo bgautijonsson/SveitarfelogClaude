@@ -1,0 +1,82 @@
+/*-- scss:defaults --*/
+
+@import "https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css";
+@import "https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js";
+
+$primary:                       hsla(232, 20%, 35%, 1);
+$secondary:                     hsla(0, 9%, 98%, 1);
+$success:                       hsla(192, 100%, 33%, 1);
+$body-bg:                       $secondary;
+
+$font-size-base:                1rem; 
+$font-family-sans-serif:        "Lato", "Open Sans", "Montserrat", "Roboto", 
+                                // Cross-platform generic font family (default user interface font)
+                                system-ui, 
+                                // Safari for macOS and iOS (San Francisco)
+                                -apple-system
+                                // Windows
+                                "Segoe UI",
+                                // Android
+                                Roboto,
+                                // older macOS and iOS
+                                "Helvetica Neue"
+                                // Linux
+                                "Noto Sans",
+                                "Liberation Sans",
+                                // Basic web fallback
+                                Arial,
+                                // Sans serif fallback
+                                sans-serif,
+                                // Emoji fonts
+                                "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+
+
+$font-family-base:              "Lato";
+$font-family-monospace:         SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+$headings-font-family:          "Bookman", "Playfair Display";
+
+  
+$carousel-control-color:        $primary;
+$carousel-caption-color:        $primary;
+$carousel-indicator-active-bg:  $primary;
+
+/*-- scss:rules --*/  
+
+
+body > nav > div > div.d-flex.flex-row > header > div > a > h1 {
+  font-size: 48px;
+  font-family: "Playfair Display";
+}
+
+  
+
+body > nav > div > div.col-12.d-flex.justify-content-center {
+  font-size: 24px;
+  border-top: 1px solid $secondary;
+  width: 100%;
+  font-family: "Segoe UI";
+}
+ 
+.card { 
+  background-color: $secondary;
+  transition: 0.5s;
+}
+.card:hover {
+  background-color: hsla(0, 12%, 96%, 1);
+  
+}
+
+.hero-row {
+  background-color: $secondary;
+}
+
+.hero-row:hover {
+  background-color: hsla(0, 12%, 96%, 1);
+}
+
+.footer {
+  font-family: "Playfair Display";
+}
+
+
