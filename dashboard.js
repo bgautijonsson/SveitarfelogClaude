@@ -12,7 +12,7 @@ class FinancialDashboard {
         
         this.margin = { top: 20, right: 40, bottom: 100, left: 80 };
         this.width = 1000 - this.margin.left - this.margin.right;
-        this.height = 400 - this.margin.top - this.margin.bottom;
+        this.height = 450 - this.margin.top - this.margin.bottom;
         
         this.init();
     }
@@ -169,10 +169,15 @@ class FinancialDashboard {
         const container = document.getElementById('chart-container');
         container.innerHTML = '';
 
+        // Calculate total SVG dimensions including legend space
+        const legendHeight = 60; // Estimated space for legend
+        const totalHeight = this.height + this.margin.top + this.margin.bottom + legendHeight;
+        
         this.svg = d3.select('#chart-container')
             .append('svg')
-            .attr('width', this.width + this.margin.left + this.margin.right)
-            .attr('height', this.height + this.margin.top + this.margin.bottom);
+            .attr('width', '100%')
+            .attr('height', totalHeight)
+            .attr('viewBox', `0 0 ${this.width + this.margin.left + this.margin.right} ${totalHeight}`);
 
         this.g = this.svg.append('g')
             .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
@@ -286,16 +291,18 @@ class FinancialDashboard {
         const lines = this.g.selectAll('.line')
             .data(Array.from(groupedData.entries()));
 
-        lines.enter()
+        const allLines = lines.enter()
             .append('path')
             .attr('class', 'line')
-            .merge(lines)
-            .transition()
+            .merge(lines);
+            
+        allLines.transition()
             .duration(750)
             .attr('d', d => currentLine(d[1].sort((a, b) => a.ar - b.ar)))
             .attr('stroke', d => this.colors(d[0]))
             .attr('stroke-width', 2)
-            .attr('fill', 'none');
+            .attr('fill', 'none')
+            .attr('opacity', 1);
 
         lines.exit().remove();
 
@@ -311,16 +318,18 @@ class FinancialDashboard {
         const circles = allDots.selectAll('.dot')
             .data(d => d[1].map(point => ({ ...point, sveitarfelag: d[0] })));
 
-        circles.enter()
+        const allCircles = circles.enter()
             .append('circle')
             .attr('class', 'dot')
-            .merge(circles)
-            .transition()
+            .merge(circles);
+            
+        allCircles.transition()
             .duration(750)
             .attr('cx', d => this.xScale(d.ar))
             .attr('cy', d => this.yScale(getDisplayY(d)))
             .attr('r', 4)
-            .attr('fill', d => this.colors(d.sveitarfelag));
+            .attr('fill', d => this.colors(d.sveitarfelag))
+            .attr('opacity', 1);
 
         circles.exit().remove();
 
@@ -343,6 +352,15 @@ class FinancialDashboard {
         hoverCircles.exit().remove();
         dots.exit().remove();
 
+        // Add hover effects for municipality highlighting
+        allDots.on('mouseenter', (event, d) => {
+            const hoveredMunicipality = d[0];
+            this.highlightMunicipality(hoveredMunicipality);
+        })
+        .on('mouseleave', () => {
+            this.resetHighlight();
+        });
+        
         this.g.selectAll('.hover-dot')
             .on('mouseover', (event, d) => {
                 this.tooltip.transition()
@@ -359,6 +377,12 @@ class FinancialDashboard {
                     .style('left', (event.pageX + 10) + 'px')
                     .style('top', (event.pageY - 28) + 'px')
                     .style('border-left', `4px solid ${this.colors(d.sveitarfelag)}`);
+            })
+            .on('mousemove', (event, d) => {
+                // Update tooltip position as mouse moves
+                this.tooltip
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
             })
             .on('mouseout', () => {
                 this.tooltip.transition()
@@ -418,6 +442,36 @@ class FinancialDashboard {
         });
 
         legendItems.exit().remove();
+    }
+
+    highlightMunicipality(hoveredMunicipality) {
+        // Highlight the hovered municipality's elements
+        this.g.selectAll('.line')
+            .transition()
+            .duration(200)
+            .attr('stroke-width', d => d[0] === hoveredMunicipality ? 3 : 1.5)
+            .attr('opacity', d => d[0] === hoveredMunicipality ? 1 : 0.4);
+            
+        this.g.selectAll('.dot')
+            .transition()
+            .duration(200)
+            .attr('r', d => d.sveitarfelag === hoveredMunicipality ? 5 : 3)
+            .attr('opacity', d => d.sveitarfelag === hoveredMunicipality ? 1 : 0.4);
+    }
+
+    resetHighlight() {
+        // Reset all elements to normal state
+        this.g.selectAll('.line')
+            .transition()
+            .duration(200)
+            .attr('stroke-width', 2)
+            .attr('opacity', 1);
+            
+        this.g.selectAll('.dot')
+            .transition()
+            .duration(200)
+            .attr('r', 4)
+            .attr('opacity', 1);
     }
 
     showError(message) {
