@@ -374,15 +374,15 @@ class FinancialDashboard {
                     Ár: ${d.ar}<br/>
                     Gildi: ${formattedValue}
                 `)
-                    .style('left', (event.pageX + 10) + 'px')
-                    .style('top', (event.pageY - 28) + 'px')
+                    .style('left', (event.clientX + 10) + 'px')
+                    .style('top', (event.clientY - 28) + 'px')
                     .style('border-left', `4px solid ${this.colors(d.sveitarfelag)}`);
             })
             .on('mousemove', (event, d) => {
                 // Update tooltip position as mouse moves
                 this.tooltip
-                    .style('left', (event.pageX + 10) + 'px')
-                    .style('top', (event.pageY - 28) + 'px');
+                    .style('left', (event.clientX + 10) + 'px')
+                    .style('top', (event.clientY - 28) + 'px');
             })
             .on('mouseout', () => {
                 this.tooltip.transition()

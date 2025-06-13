@@ -119,11 +119,18 @@
         }
 
         .tooltip {
+            position: absolute;
             background-color: var(--theme-secondary);
             color: var(--theme-primary);
             border: 1px solid #dee2e6;
             font-family: "Lato", sans-serif;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            padding: 8px 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 1000;
+            font-size: 12px;
+            max-width: 200px;
         }
 
         .tooltip strong {
