@@ -213,6 +213,16 @@ class FinancialDashboard {
         this.legend = this.svg.append('g')
             .attr('class', 'legend')
             .attr('transform', `translate(${this.margin.left}, ${this.height + this.margin.top + 50})`);
+
+        this.zeroLine = this.g.append('line')
+            .attr('class', 'zero-line')
+            .attr('x1', 0)
+            .attr('x2', this.width)
+            .style('stroke', 'var(--theme-primary)')
+            .style('stroke-width', 1)
+            .style('stroke-dasharray', '3,3')
+            .style('opacity', 0.4)
+            .style('display', 'none');
     }
 
     updateChart() {
@@ -220,6 +230,7 @@ class FinancialDashboard {
             this.g.selectAll('.line').remove();
             this.g.selectAll('.dot').remove();
             this.legend.selectAll('.legend-item').remove();
+            this.zeroLine.style('display', 'none');
             return;
         }
 
@@ -235,14 +246,42 @@ class FinancialDashboard {
 
         const groupedData = d3.group(this.filteredData, d => d.sveitarfelag);
 
+        const isPercent = this.filteredData[0].is_percent;
+        
+        // Helper function to get y value for display
+        const getDisplayY = (d) => isPercent ? d.y * 100 : d.y;
+        
         this.xScale.domain(d3.extent(this.filteredData, d => d.ar));
-        this.yScale.domain(d3.extent(this.filteredData, d => d.y));
+        this.yScale.domain(d3.extent(this.filteredData, d => getDisplayY(d)));
 
         this.xAxis.transition().duration(750).call(d3.axisBottom(this.xScale).tickFormat(d3.format('d')));
-        this.yAxis.transition().duration(750).call(d3.axisLeft(this.yScale));
+        const yAxisFormat = isPercent ? 
+            (d => d.toFixed(1) + '%') : 
+            d3.format('.2s');
+        this.yAxis.transition().duration(750).call(d3.axisLeft(this.yScale).tickFormat(yAxisFormat));
 
-        const isPercent = this.filteredData[0].is_percent;
         this.yAxisLabel.text(this.selectedName + (isPercent ? ' (%)' : ''));
+
+        // Update zero line visibility and position
+        const yDomain = this.yScale.domain();
+        const zeroInRange = yDomain[0] <= 0 && yDomain[1] >= 0;
+        
+        if (zeroInRange) {
+            this.zeroLine
+                .style('display', 'block')
+                .transition()
+                .duration(750)
+                .attr('y1', this.yScale(0))
+                .attr('y2', this.yScale(0));
+        } else {
+            this.zeroLine.style('display', 'none');
+        }
+
+        // Update line generator for current data type
+        const currentLine = d3.line()
+            .x(d => this.xScale(d.ar))
+            .y(d => this.yScale(getDisplayY(d)))
+            .curve(d3.curveMonotoneX);
 
         const lines = this.g.selectAll('.line')
             .data(Array.from(groupedData.entries()));
@@ -253,7 +292,7 @@ class FinancialDashboard {
             .merge(lines)
             .transition()
             .duration(750)
-            .attr('d', d => this.line(d[1].sort((a, b) => a.ar - b.ar)))
+            .attr('d', d => currentLine(d[1].sort((a, b) => a.ar - b.ar)))
             .attr('stroke', d => this.colors(d[0]))
             .attr('stroke-width', 2)
             .attr('fill', 'none');
@@ -279,7 +318,7 @@ class FinancialDashboard {
             .transition()
             .duration(750)
             .attr('cx', d => this.xScale(d.ar))
-            .attr('cy', d => this.yScale(d.y))
+            .attr('cy', d => this.yScale(getDisplayY(d)))
             .attr('r', 4)
             .attr('fill', d => this.colors(d.sveitarfelag));
 
@@ -296,7 +335,7 @@ class FinancialDashboard {
             .transition()
             .duration(750)
             .attr('cx', d => this.xScale(d.ar))
-            .attr('cy', d => this.yScale(d.y))
+            .attr('cy', d => this.yScale(getDisplayY(d)))
             .attr('r', 12)
             .attr('fill', 'transparent')
             .attr('stroke', 'none');
@@ -309,10 +348,13 @@ class FinancialDashboard {
                 this.tooltip.transition()
                     .duration(200)
                     .style('opacity', .9);
+                const formattedValue = isPercent ? 
+                    (d.y * 100).toFixed(1) + '%' : 
+                    d.y.toLocaleString();
                 this.tooltip.html(`
                     <strong>${d.sveitarfelag}</strong><br/>
                     Ár: ${d.ar}<br/>
-                    Gildi: ${d.y.toLocaleString()}${isPercent ? '%' : ''}
+                    Gildi: ${formattedValue}
                 `)
                     .style('left', (event.pageX + 10) + 'px')
                     .style('top', (event.pageY - 28) + 'px')
