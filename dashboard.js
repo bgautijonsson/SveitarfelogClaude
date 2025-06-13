@@ -10,11 +10,34 @@ class FinancialDashboard {
         this.selectedName = '';
         this.colors = d3.scaleOrdinal(d3.schemeCategory10);
         
-        this.margin = { top: 20, right: 40, bottom: 100, left: 80 };
-        this.width = 1000 - this.margin.left - this.margin.right;
-        this.height = 450 - this.margin.top - this.margin.bottom;
+        // Responsive dimensions
+        this.setupResponsiveDimensions();
         
         this.init();
+    }
+
+    setupResponsiveDimensions() {
+        // Get container width for responsive sizing
+        const container = document.getElementById('chart-container') || { clientWidth: 1000 };
+        const containerWidth = Math.max(container.clientWidth || 1000, 300); // Minimum 300px
+        
+        // Responsive margins based on screen size
+        const isMobile = window.innerWidth <= 768;
+        const isTablet = window.innerWidth <= 1024;
+        
+        if (isMobile) {
+            this.margin = { top: 15, right: 20, bottom: 80, left: 60 };
+            this.height = 300;
+        } else if (isTablet) {
+            this.margin = { top: 20, right: 30, bottom: 90, left: 70 };
+            this.height = 380;
+        } else {
+            this.margin = { top: 20, right: 40, bottom: 100, left: 80 };
+            this.height = 450;
+        }
+        
+        this.width = Math.min(containerWidth - 40, 1000) - this.margin.left - this.margin.right;
+        this.height = this.height - this.margin.top - this.margin.bottom;
     }
 
     async init() {
@@ -23,6 +46,7 @@ class FinancialDashboard {
             this.setupChart();
             this.setupControls();
             this.updateChart();
+            this.setupResizeListener();
         } catch (error) {
             this.showError('Failed to load data: ' + error.message);
         }
@@ -197,11 +221,17 @@ class FinancialDashboard {
         this.yAxis = this.g.append('g')
             .attr('class', 'axis');
 
+        // Responsive axis label positioning
+        const isMobile = window.innerWidth <= 768;
+        const xLabelOffset = isMobile ? 25 : 35;
+        const yLabelOffset = isMobile ? -35 : -50;
+        
         this.xAxisLabel = this.g.append('text')
             .attr('class', 'axis-label')
             .attr('text-anchor', 'middle')
             .attr('x', this.width / 2)
-            .attr('y', this.height + 35)
+            .attr('y', this.height + xLabelOffset)
+            .style('font-size', isMobile ? '12px' : '14px')
             .text('Ár');
 
         this.yAxisLabel = this.g.append('text')
@@ -209,7 +239,8 @@ class FinancialDashboard {
             .attr('text-anchor', 'middle')
             .attr('transform', 'rotate(-90)')
             .attr('x', -this.height / 2)
-            .attr('y', -50);
+            .attr('y', yLabelOffset)
+            .style('font-size', isMobile ? '12px' : '14px');
 
         this.tooltip = d3.select('body').append('div')
             .attr('class', 'tooltip')
@@ -409,7 +440,7 @@ class FinancialDashboard {
             .attr('x', 20)
             .attr('y', 7)
             .attr('dy', '0.35em')
-            .style('font-size', '11px')
+            .style('font-size', window.innerWidth <= 768 ? '10px' : '11px')
             .style('font-family', 'Lato, sans-serif');
 
         const legendMerge = legendEnter.merge(legendItems);
@@ -472,6 +503,18 @@ class FinancialDashboard {
             .duration(200)
             .attr('r', 4)
             .attr('opacity', 1);
+    }
+
+    setupResizeListener() {
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.setupResponsiveDimensions();
+                this.setupChart();
+                this.updateChart();
+            }, 250);
+        });
     }
 
     showError(message) {
